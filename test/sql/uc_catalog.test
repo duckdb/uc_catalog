@@ -1,0 +1,23 @@
+# name: test/sql/uc_catalog.test
+# description: test uc_catalog extension
+# group: [uc_catalog]
+
+# Before we load the extension, this will fail
+statement error
+SELECT uc_catalog('Sam');
+----
+Catalog Error: Scalar Function with name uc_catalog does not exist!
+
+# Require statement will ensure this test is run with this extension loaded
+require uc_catalog
+
+# Confirm the extension works
+query I
+SELECT uc_catalog('Sam');
+----
+UcCatalog Sam 🐥
+
+query I
+SELECT uc_catalog_openssl_version('Michael');
+----
+<REGEX>:UcCatalog Michael, my linked OpenSSL version is OpenSSL.*
