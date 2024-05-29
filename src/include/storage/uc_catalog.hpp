@@ -16,6 +16,11 @@
 namespace duckdb {
 class UCSchemaEntry;
 
+struct UCCredentials {
+    string endpoint;
+    string token;
+};
+
 class UCClearCacheFunction : public TableFunction {
 public:
     UCClearCacheFunction();
@@ -25,11 +30,12 @@ public:
 
 class UCCatalog : public Catalog {
 public:
-	explicit UCCatalog(AttachedDatabase &db_p, const string &path, AccessMode access_mode);
+	explicit UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode, UCCredentials credentials);
 	~UCCatalog();
 
-	string path;
+	string internal_name;
 	AccessMode access_mode;
+    UCCredentials credentials;
 
 public:
 	void Initialize(bool load_builtin) override;

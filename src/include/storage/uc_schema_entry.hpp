@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "uc_api.hpp"
 #include "duckdb/catalog/catalog_entry/schema_catalog_entry.hpp"
 #include "storage/uc_table_set.hpp"
 
@@ -17,7 +18,9 @@ class UCTransaction;
 class UCSchemaEntry : public SchemaCatalogEntry {
 public:
 	UCSchemaEntry(Catalog &catalog, CreateSchemaInfo &info);
+    ~UCSchemaEntry() override;
 
+    unique_ptr<UCAPISchema> schema_data;
 public:
 	optional_ptr<CatalogEntry> CreateTable(CatalogTransaction transaction, BoundCreateTableInfo &info) override;
 	optional_ptr<CatalogEntry> CreateFunction(CatalogTransaction transaction, CreateFunctionInfo &info) override;

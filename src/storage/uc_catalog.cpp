@@ -8,11 +8,8 @@
 
 namespace duckdb {
 
-UCCatalog::UCCatalog(AttachedDatabase &db_p, const string &path, AccessMode access_mode)
-    : Catalog(db_p), path(path), access_mode(access_mode), schemas(*this) {
-//	default_schema = UCUtils::ParseConnectionParameters(path).db;
-//	// try to connect
-//	auto connection = UCConnection::Open(path);
+UCCatalog::UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode, UCCredentials credentials)
+    : Catalog(db_p), internal_name(internal_name),access_mode(access_mode), schemas(*this), credentials(std::move(credentials)) {
 }
 
 UCCatalog::~UCCatalog() = default;
@@ -63,7 +60,7 @@ bool UCCatalog::InMemory() {
 }
 
 string UCCatalog::GetDBPath() {
-	return path;
+	return internal_name;
 }
 
 DatabaseSize UCCatalog::GetDatabaseSize(ClientContext &context) {

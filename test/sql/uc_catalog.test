@@ -5,13 +5,38 @@
 # Require statement will ensure this test is run with this extension loaded
 require uc_catalog
 
-mode output_result
+require delta
 
-statement ok
-ATTACH 'some_uc_path' AS s1 (TYPE UC_CATALOG)
+require httpfs
 
+# Catalog Secret
 statement ok
-show tables;
+CREATE SECRET (
+	TYPE UC,
+	TOKEN '<redacted>',
+	ENDPOINT 'https://dbc-1bcdcee8-1250.staging.cloud.databricks.com'
+)
 
+# S3 Secret
 statement ok
-from s1.schema1.table1;
+CREATE SECRET (
+	TYPE S3,
+	REGION 'eu-west-1'
+)
+
+# attach the workspace catalog under uc1 alias
+statement ok
+ATTACH 'workspace' AS uc1 (TYPE UC_CATALOG)
+
+query I rowsort
+SELECT table_name
+FROM duckdb_tables() 
+WHERE database_name='uc1' AND schema_name='default';
+----
+color_srgb
+username_test
+
+statement error
+select count(*) from uc1.default.color_srgb;
+----
+asdasd

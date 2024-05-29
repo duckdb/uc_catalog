@@ -7,4 +7,8 @@ duckdb_extension_load(uc_catalog
 )
 
 # Any extra extensions that should be built
-# e.g.: duckdb_extension_load(json)
+duckdb_extension_load(httpfs)
+duckdb_extension_load(json)
+duckdb_extension_load(delta
+    SOURCE_DIR /Users/sam/Development/delta-kernel-testing
+)

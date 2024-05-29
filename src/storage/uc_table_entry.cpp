@@ -4,6 +4,11 @@
 #include "storage/uc_transaction.hpp"
 #include "duckdb/storage/statistics/base_statistics.hpp"
 #include "duckdb/storage/table_storage_info.hpp"
+#include "duckdb/main/extension_util.hpp"
+#include "duckdb/main/database.hpp"
+#include "duckdb/catalog/catalog_entry/table_function_catalog_entry.hpp"
+#include "duckdb/parser/tableref/table_function_ref.hpp"
+#include "uc_api.hpp"
 
 namespace duckdb {
 
@@ -26,23 +31,27 @@ void UCTableEntry::BindUpdateConstraints(Binder &binder, LogicalGet &, LogicalPr
 }
 
 TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<FunctionData> &bind_data) {
-    // TODO look up the delta scan function
-    throw NotImplementedException("UCTableEntry::GetScanFunction");
+    auto &db = DatabaseInstance::GetDatabase(context);
+    auto &delta_function_set = ExtensionUtil::GetTableFunction(db, "delta_scan");
+    auto delta_scan_function = delta_function_set.functions.GetFunctionByArguments(context, {LogicalType::VARCHAR});
 
-//	auto result = make_uniq<UCBindData>(*this);
-//	for (auto &col : columns.Logical()) {
-//		result->types.push_back(col.GetType());
-//		result->names.push_back(col.GetName());
-//	}
-//
-//	bind_data = std::move(result);
-//
-//	auto function = UCScanFunction();
-//	Value filter_pushdown;
-//	if (context.TryGetCurrentSetting("uc_experimental_filter_pushdown", filter_pushdown)) {
-//		function.filter_pushdown = BooleanValue::Get(filter_pushdown);
-//	}
-//	return function;
+    D_ASSERT(table_data);
+
+    // TODO: remove override
+    vector<Value> inputs = {"s3://test-bucket-ceiveran/delta_testing/simple_sf1_with_dv/delta_lake"};
+
+    named_parameter_map_t param_map;
+    vector<LogicalType> return_types;
+    vector<string> names;
+    TableFunctionRef empty_ref;
+
+    // TODO: mind the types and names here!
+    TableFunctionBindInput bind_input(inputs, param_map, return_types, names, nullptr, nullptr, delta_scan_function, empty_ref);
+
+    auto result = delta_scan_function.bind(context, bind_input, return_types, names);
+    bind_data = std::move(result);
+
+    return delta_scan_function;
 }
 
 TableStorageInfo UCTableEntry::GetStorageInfo(ClientContext &context) {

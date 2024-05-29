@@ -17,6 +17,9 @@ UCSchemaEntry::UCSchemaEntry(Catalog &catalog, CreateSchemaInfo &info)
     : SchemaCatalogEntry(catalog, info), tables(*this) {
 }
 
+UCSchemaEntry::~UCSchemaEntry(){
+}
+
 UCTransaction &GetUCTransaction(CatalogTransaction transaction) {
 	if (!transaction.transaction) {
 		throw InternalException("No transaction!?");
