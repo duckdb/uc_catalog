@@ -18,6 +18,7 @@ jobs:
     with:
       duckdb_version: v0.10.3
       extension_name: uc_catalog
+      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads;windows_amd64_rtools;windows_amd64;linux_arm64'
 
   duckdb-stable-deploy:
     name: Deploy extension binaries
@@ -27,4 +28,5 @@ jobs:
     with:
       duckdb_version: v0.10.3
       extension_name: uc_catalog
+      exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads;windows_amd64_rtools;windows_amd64;linux_arm64'
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
