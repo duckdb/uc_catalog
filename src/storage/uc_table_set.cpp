@@ -39,7 +39,7 @@ void UCTableSet::LoadEntries(ClientContext &context) {
             info.columns.AddColumn(CreateColumnDefinition(context, col));
         }
 
-        info.table = table.table_name;
+        info.table = table.name;
         auto table_entry = make_uniq<UCTableEntry>(catalog, schema, info);
         table_entry->table_data = make_uniq<UCAPITable>(table);
 

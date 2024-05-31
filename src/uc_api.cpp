@@ -38,6 +38,66 @@ static string GetRequest(const string& url, const string& token = ""){
     throw InternalException("Failed to initialize curl");
 }
 
+template <class TYPE, uint8_t TYPE_NUM, TYPE (*get_function)(duckdb_yyjson::yyjson_val *obj)>
+static TYPE TemplatedTryGetYYJson(duckdb_yyjson::yyjson_val *obj, const string &field, TYPE default_val, bool fail_on_missing = true) {
+    auto val = yyjson_obj_get(obj, field.c_str());
+    if (val && yyjson_get_type(val) == TYPE_NUM) {
+        return get_function(val);
+    } else if (!fail_on_missing) {
+        return default_val;
+    }
+    throw IOException("Invalid field found while parsing field: " + field);
+}
+
+static uint64_t TryGetNumFromObject(duckdb_yyjson::yyjson_val *obj, const string &field, bool fail_on_missing = true, uint64_t default_val = 0) {
+    return TemplatedTryGetYYJson<uint64_t, YYJSON_TYPE_NUM, duckdb_yyjson::yyjson_get_uint>(obj, field, default_val, fail_on_missing);
+}
+static bool TryGetBoolFromObject(duckdb_yyjson::yyjson_val *obj, const string &field, bool fail_on_missing = false, bool default_val = false) {
+    return TemplatedTryGetYYJson<bool, YYJSON_TYPE_BOOL, duckdb_yyjson::yyjson_get_bool>(obj, field, default_val, fail_on_missing);
+}
+static string TryGetStrFromObject(duckdb_yyjson::yyjson_val *obj, const string &field, bool fail_on_missing = true, const char* default_val = "") {
+    return TemplatedTryGetYYJson<const char *, YYJSON_TYPE_STR, duckdb_yyjson::yyjson_get_str>(obj, field, default_val, fail_on_missing);
+}
+
+static string GetCredentialsRequest(const string& url, const string &table_id, const string& token = ""){
+    CURL *curl;
+    CURLcode res;
+    string readBuffer;
+
+    string body = StringUtil::Format(R"({"table_id" : "%s", "operation" : "READ_WRITE"})", table_id);
+
+    curl = curl_easy_init();
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, GetRequestWriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+
+        // Set headers
+        struct curl_slist *headers = curl_slist_append(nullptr, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        // Set token
+        if (!token.empty()) {
+            curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, token.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
+        }
+
+        // Set request body
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, body.length());
+
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLcode::CURLE_OK) {
+            string error = curl_easy_strerror(res);
+            throw IOException("Curl Request to '%s' failed with error: '%s'", url, error);
+        }
+        return readBuffer;
+    }
+    throw InternalException("Failed to initialize curl");
+}
+
 //# list catalogs
 //    echo "List of catalogs"
 //    curl --request GET "https://${DATABRICKS_HOST}/api/2.1/unity-catalog/catalogs" \
@@ -54,6 +114,25 @@ static string GetRequest(const string& url, const string& token = ""){
 // 	--header "Authorization: Bearer ${TOKEN}" | jq .
 
 
+UCAPITableCredentials UCAPI::GetTableCredentials(const string &table_id, UCCredentials credentials) {
+    UCAPITableCredentials result;
+
+    auto api_result = GetCredentialsRequest(credentials.endpoint + "/api/2.1/unity-catalog/temporary-table-credentials", table_id, credentials.token);
+
+    // Read JSON and get root
+    duckdb_yyjson::yyjson_doc *doc = duckdb_yyjson::yyjson_read(api_result.c_str(), api_result.size(), 0);
+    duckdb_yyjson::yyjson_val *root = yyjson_doc_get_root(doc);
+
+    auto *aws_temp_credentials = yyjson_obj_get(root, "aws_temp_credentials");
+    if (aws_temp_credentials) {
+        result.key_id = TryGetStrFromObject(aws_temp_credentials, "access_key_id");
+        result.secret = TryGetStrFromObject(aws_temp_credentials, "secret_access_key");
+        result.session_token = TryGetStrFromObject(aws_temp_credentials, "session_token");
+    }
+
+    return result;
+}
+
 vector<string> UCAPI::GetCatalogs(const string &catalog, UCCredentials credentials) {
     throw NotImplementedException("UCAPI::GetCatalogs");
 }
@@ -61,40 +140,11 @@ vector<string> UCAPI::GetCatalogs(const string &catalog, UCCredentials credentia
 static UCAPIColumnDefinition ParseColumnDefinition(duckdb_yyjson::yyjson_val *column_def) {
     UCAPIColumnDefinition result;
 
-    auto *name_json = yyjson_obj_get(column_def, "name");
-    if (name_json) {
-        result.name = yyjson_get_str(name_json);
-    } else {
-        throw IOException("Failed to parse name from column");
-    }
-
-    auto *type_text_json = yyjson_obj_get(column_def, "type_text");
-    if (type_text_json) {
-        result.type_text = yyjson_get_str(type_text_json);
-    } else {
-        throw IOException("Failed to parse type_text from column");
-    }
-
-    auto *type_precision = yyjson_obj_get(column_def, "type_precision");
-    if (type_precision) {
-        result.precision = yyjson_get_int(type_text_json);
-    } else {
-        throw IOException("Failed to parse type_precision from column");
-    }
-
-    auto *type_scale = yyjson_obj_get(column_def, "type_scale");
-    if (type_scale) {
-        result.scale = yyjson_get_int(type_scale);
-    } else {
-        throw IOException("Failed to parse type_scale from column");
-    }
-
-    auto *position = yyjson_obj_get(column_def, "position");
-    if (position) {
-        result.position = yyjson_get_int(type_scale);
-    } else {
-        throw IOException("Failed to parse position from column");
-    }
+    result.name = TryGetStrFromObject(column_def, "name");
+    result.type_text = TryGetStrFromObject(column_def, "type_text");
+    result.precision = TryGetNumFromObject(column_def, "type_precision");
+    result.scale = TryGetNumFromObject(column_def, "type_scale");
+    result.position = TryGetNumFromObject(column_def, "position");
 
     return result;
 }
@@ -108,43 +158,27 @@ vector<UCAPITable> UCAPI::GetTables(const string &catalog, const string &schema,
     duckdb_yyjson::yyjson_val *root = yyjson_doc_get_root(doc);
 
     // Get root["hits"], iterate over the array
-    auto *hits = yyjson_obj_get(root, "tables");
+    auto *tables = yyjson_obj_get(root, "tables");
     size_t idx, max;
-    duckdb_yyjson::yyjson_val *hit;
-    yyjson_arr_foreach(hits, idx, max, hit) {
+    duckdb_yyjson::yyjson_val *table;
+    yyjson_arr_foreach(tables, idx, max, table) {
         UCAPITable table_result;
         table_result.catalog_name = catalog;
         table_result.schema_name = schema;
 
-        auto *name = yyjson_obj_get(hit, "name");
-        if (name) {
-            table_result.table_name = yyjson_get_str(name);
-        }
+        table_result.name = TryGetStrFromObject(table, "name");
+        table_result.table_type = TryGetStrFromObject(table, "table_type");
+        table_result.data_source_format = TryGetStrFromObject(table, "data_source_format", false);
+        table_result.storage_location = TryGetStrFromObject(table, "storage_location", false);
+        table_result.table_id = TryGetStrFromObject(table, "table_id");
 
-        auto *storage_location = yyjson_obj_get(hit, "storage_location");
-        if (storage_location) {
-            table_result.delta_path = yyjson_get_str(storage_location);
-        }
-
-        auto *columns = yyjson_obj_get(hit, "columns");
+        auto *columns = yyjson_obj_get(table, "columns");
         duckdb_yyjson::yyjson_val *col;
         size_t col_idx, col_max;
         yyjson_arr_foreach(columns, col_idx, col_max, col) {
             auto column_definition = ParseColumnDefinition(col);
             table_result.columns.push_back(column_definition);
         }
-
-        // TODO: remove override
-        table_result.columns = {
-            {
-                "id",
-                "bigint"
-            },
-            {
-                "value",
-                "string"
-            }
-        };
 
         result.push_back(table_result);
     }
@@ -153,17 +187,31 @@ vector<UCAPITable> UCAPI::GetTables(const string &catalog, const string &schema,
 }
 
 vector<UCAPISchema> UCAPI::GetSchemas(const string &catalog, UCCredentials credentials) {
-    // TODO query API
-    return {
-        {
-            "default",
-            "workspace"
-        },
-        {
-            "information_schema",
-            "workspace"
+    vector<UCAPISchema> result;
+
+    auto api_result = GetRequest(credentials.endpoint + "/api/2.1/unity-catalog/schemas?catalog_name=" + catalog, credentials.token);
+
+    // Read JSON and get root
+    duckdb_yyjson::yyjson_doc *doc = duckdb_yyjson::yyjson_read(api_result.c_str(), api_result.size(), 0);
+    duckdb_yyjson::yyjson_val *root = yyjson_doc_get_root(doc);
+
+    // Get root["hits"], iterate over the array
+    auto *schemas = yyjson_obj_get(root, "schemas");
+    size_t idx, max;
+    duckdb_yyjson::yyjson_val *schema;
+    yyjson_arr_foreach(schemas, idx, max, schema) {
+        UCAPISchema schema_result;
+
+        auto *name = yyjson_obj_get(schema, "name");
+        if (name) {
+            schema_result.schema_name = yyjson_get_str(name);
         }
-    };
+        schema_result.catalog_name = catalog;
+
+        result.push_back(schema_result);
+    }
+
+    return result;
 }
 
 } // namespace duckdb

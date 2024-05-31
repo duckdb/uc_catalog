@@ -9,7 +9,7 @@
 namespace duckdb {
 
 UCCatalog::UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode, UCCredentials credentials)
-    : Catalog(db_p), internal_name(internal_name),access_mode(access_mode), schemas(*this), credentials(std::move(credentials)) {
+    : Catalog(db_p), internal_name(internal_name),access_mode(access_mode), credentials(std::move(credentials)), schemas(*this) {
 }
 
 UCCatalog::~UCCatalog() = default;
@@ -68,7 +68,6 @@ DatabaseSize UCCatalog::GetDatabaseSize(ClientContext &context) {
 		throw InvalidInputException("Attempting to fetch the database size - but no database was provided "
 		                            "in the connection string");
 	}
-//	auto &postgres_transaction = UCTransaction::Get(context, *this);
 	DatabaseSize size;
 	return size;
 }

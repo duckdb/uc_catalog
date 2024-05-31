@@ -9,34 +9,49 @@ require delta
 
 require httpfs
 
+# TODO: delta ext can currently not be built in CI so this is disabled by default
+mode skip
+
 # Catalog Secret
 statement ok
 CREATE SECRET (
 	TYPE UC,
 	TOKEN '<redacted>',
-	ENDPOINT 'https://dbc-1bcdcee8-1250.staging.cloud.databricks.com'
-)
-
-# S3 Secret
-statement ok
-CREATE SECRET (
-	TYPE S3,
-	REGION 'eu-west-1'
+	ENDPOINT 'https://dbc-0c3d2ced-509c.cloud.databricks.com',
+	AWS_REGION 'us-east-2'
 )
 
 # attach the workspace catalog under uc1 alias
 statement ok
-ATTACH 'workspace' AS uc1 (TYPE UC_CATALOG)
+ATTACH 'test_catalog' AS test_catalog (TYPE UC_CATALOG)
 
-query I rowsort
-SELECT table_name
-FROM duckdb_tables() 
-WHERE database_name='uc1' AND schema_name='default';
+# Note that the "information_schema" schema is assumed to be internal atm so not shown here
+query IIIIII
+SHOW ALL TABLES;
 ----
-color_srgb
-username_test
+test_catalog	test_schema	test_table	[a, b]	[INTEGER, VARCHAR]	false
+test_catalog	test_schema	test_table2	[a, b]	[VARCHAR, INTEGER]	false
 
-statement error
-select count(*) from uc1.default.color_srgb;
+query II
+select * from test_catalog.test_schema.test_table;
 ----
-asdasd
+1	x
+
+query II
+select * from test_catalog.test_schema.test_table2;
+----
+x	1
+
+# Note that there exist now 2 secrets: the UC secret and the temporary s3 credentials fetched from UC
+query II rowsort
+select name[:14], type from duckdb_secrets()
+----
+__default_uc	uc
+__internal_uc_	s3
+__internal_uc_	s3
+
+# If we query a table again, the secret will be updated
+query II
+select * from test_catalog.test_schema.test_table;
+----
+1	x

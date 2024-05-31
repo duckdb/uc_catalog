@@ -28,6 +28,8 @@ static unique_ptr<BaseSecret> CreateUCSecretFunction(ClientContext &, CreateSecr
             result->secret_map["token"] = named_param.second.ToString();
         } else if (lower_name == "endpoint") {
             result->secret_map["endpoint"] = named_param.second.ToString();
+        } else if (lower_name == "aws_region") {
+            result->secret_map["aws_region"] = named_param.second.ToString();
         } else {
             throw InternalException("Unknown named parameter passed to CreateUCSecretFunction: " + lower_name);
         }
@@ -42,6 +44,7 @@ static unique_ptr<BaseSecret> CreateUCSecretFunction(ClientContext &, CreateSecr
 static void SetUCSecretParameters(CreateSecretFunction &function) {
     function.named_parameters["token"] = LogicalType::VARCHAR;
     function.named_parameters["endpoint"] = LogicalType::VARCHAR;
+    function.named_parameters["aws_region"] = LogicalType::VARCHAR;
 }
 
 unique_ptr<SecretEntry> GetSecret(ClientContext &context, const string &secret_name) {
@@ -101,6 +104,10 @@ static unique_ptr<Catalog> UCCatalogAttach(StorageExtensionInfo *storage_info,
 
         Value endpoint_val = kv_secret.TryGetValue("endpoint");
         credentials.endpoint = endpoint_val.IsNull() ? "" : endpoint_val.ToString();
+
+        Value aws_region_val = kv_secret.TryGetValue("aws_region");
+        credentials.aws_region = endpoint_val.IsNull() ? "" : aws_region_val.ToString();
+
     } else if (explicit_secret) {
         // secret not found and one was explicitly provided - throw an error
         throw BinderException("Secret with name \"%s\" not found", secret_name);

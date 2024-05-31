@@ -19,6 +19,9 @@ class UCSchemaEntry;
 struct UCCredentials {
     string endpoint;
     string token;
+
+	// Not really part of the credentials, but required to query s3 tables
+	string aws_region;
 };
 
 class UCClearCacheFunction : public TableFunction {
