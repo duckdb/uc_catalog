@@ -104,6 +104,7 @@ static unique_ptr<Catalog> UCCatalogAttach(StorageExtensionInfo *storage_info,
 
         Value endpoint_val = kv_secret.TryGetValue("endpoint");
         credentials.endpoint = endpoint_val.IsNull() ? "" : endpoint_val.ToString();
+        StringUtil::RTrim(credentials.endpoint, "/");
 
         Value aws_region_val = kv_secret.TryGetValue("aws_region");
         credentials.aws_region = endpoint_val.IsNull() ? "" : aws_region_val.ToString();
