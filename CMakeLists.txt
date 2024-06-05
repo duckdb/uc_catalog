@@ -9,11 +9,9 @@ set(LOADABLE_EXTENSION_NAME ${TARGET_NAME}_loadable_extension)
 project(${TARGET_NAME})
 include_directories(src/include)
 
-add_subdirectory(src)
-
 find_package(CURL REQUIRED)
-include_directories(${CURL_INCLUDE_DIRS})
-include_directories(CURL::libcurl)
+
+add_subdirectory(src)
 
 build_static_extension(${TARGET_NAME} ${ALL_OBJECT_FILES})
 build_loadable_extension(${TARGET_NAME} " " ${ALL_OBJECT_FILES})

@@ -64,7 +64,7 @@ static string GetCredentialsRequest(const string& url, const string &table_id, c
     CURLcode res;
     string readBuffer;
 
-    string body = StringUtil::Format(R"({"table_id" : "%s", "operation" : "READ_WRITE"})", table_id);
+    string body = StringUtil::Format(R"({"table_id" : "%s", "operation" : "READ"})", table_id);
 
     curl = curl_easy_init();
     if(curl) {
