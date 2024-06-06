@@ -11,5 +11,5 @@ duckdb_extension_load(uc_catalog
 #duckdb_extension_load(json)
 #duckdb_extension_load(delta
 #        GIT_URL https://github.com/duckdb/duckdb_delta
-#        GIT_TAG 90f9557fe6d37e99160438ec1ba7b54c5d21dd4e
+#        GIT_TAG main
 #)
