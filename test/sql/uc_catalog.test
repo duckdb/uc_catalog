@@ -3,22 +3,28 @@
 # group: [uc_catalog]
 
 # Require statement will ensure this test is run with this extension loaded
+require parquet
+
 require uc_catalog
 
 require delta
 
 require httpfs
 
-# TODO: delta ext can currently not be built in CI so this is disabled by default
-mode skip
+# Set these to run the test
+require-env UC_TOKEN
+
+require-env UC_ENDPOINT
+
+require-env UC_AWS_REGION
 
 # Catalog Secret
 statement ok
 CREATE SECRET (
 	TYPE UC,
-	TOKEN '<redacted>',
-	ENDPOINT 'https://dbc-0c3d2ced-509c.cloud.databricks.com',
-	AWS_REGION 'us-east-2'
+	TOKEN '${UC_TOKEN}',
+	ENDPOINT '${UC_ENDPOINT}',
+	AWS_REGION '${UC_AWS_REGION}'
 )
 
 # attach the workspace catalog under uc1 alias
@@ -31,6 +37,8 @@ SHOW ALL TABLES;
 ----
 test_catalog	test_schema	test_table	[a, b]	[INTEGER, VARCHAR]	false
 test_catalog	test_schema	test_table2	[a, b]	[VARCHAR, INTEGER]	false
+test_catalog	test_schema	test_table_ramesh	[x]	[INTEGER]	false
+test_catalog	test_schema	test_table_tdas	[a, b]	[INTEGER, VARCHAR]	false
 
 query II
 select * from test_catalog.test_schema.test_table;
