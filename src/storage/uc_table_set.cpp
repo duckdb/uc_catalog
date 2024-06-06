@@ -21,7 +21,7 @@ UCTableSet::UCTableSet(UCSchemaEntry &schema) : UCInSchemaSet(schema) {
 }
 
 static ColumnDefinition CreateColumnDefinition(ClientContext &context, UCAPIColumnDefinition &coldef) {
-    return {coldef.name, UCUtils::TypeToLogicalType(context, coldef)};
+    return {coldef.name, UCUtils::TypeToLogicalType(context, coldef.type_text)};
 }
 
 void UCTableSet::LoadEntries(ClientContext &context) {
