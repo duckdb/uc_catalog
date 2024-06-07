@@ -17,7 +17,7 @@ UCSchemaEntry::UCSchemaEntry(Catalog &catalog, CreateSchemaInfo &info)
     : SchemaCatalogEntry(catalog, info), tables(*this) {
 }
 
-UCSchemaEntry::~UCSchemaEntry(){
+UCSchemaEntry::~UCSchemaEntry() {
 }
 
 UCTransaction &GetUCTransaction(CatalogTransaction transaction) {
@@ -51,7 +51,7 @@ void UCUnqualifyColumnRef(ParsedExpression &expr) {
 }
 
 optional_ptr<CatalogEntry> UCSchemaEntry::CreateIndex(CatalogTransaction transaction, CreateIndexInfo &info,
-                                                         TableCatalogEntry &table) {
+                                                      TableCatalogEntry &table) {
 	throw NotImplementedException("CreateIndex");
 }
 
@@ -71,11 +71,11 @@ optional_ptr<CatalogEntry> UCSchemaEntry::CreateView(CatalogTransaction transact
 			if (info.on_conflict == OnCreateConflict::IGNORE_ON_CONFLICT) {
 				return current_entry;
 			}
-            throw NotImplementedException("REPLACE ON CONFLICT in CreateView");
+			throw NotImplementedException("REPLACE ON CONFLICT in CreateView");
 		}
 	}
 	auto &uc_transaction = GetUCTransaction(transaction);
-//	uc_transaction.Query(GetUCCreateView(info));
+	//	uc_transaction.Query(GetUCCreateView(info));
 	return tables.RefreshTable(transaction.GetContext(), info.view_name);
 }
 
@@ -88,22 +88,21 @@ optional_ptr<CatalogEntry> UCSchemaEntry::CreateSequence(CatalogTransaction tran
 }
 
 optional_ptr<CatalogEntry> UCSchemaEntry::CreateTableFunction(CatalogTransaction transaction,
-                                                                 CreateTableFunctionInfo &info) {
+                                                              CreateTableFunctionInfo &info) {
 	throw BinderException("UC databases do not support creating table functions");
 }
 
 optional_ptr<CatalogEntry> UCSchemaEntry::CreateCopyFunction(CatalogTransaction transaction,
-                                                                CreateCopyFunctionInfo &info) {
+                                                             CreateCopyFunctionInfo &info) {
 	throw BinderException("UC databases do not support creating copy functions");
 }
 
 optional_ptr<CatalogEntry> UCSchemaEntry::CreatePragmaFunction(CatalogTransaction transaction,
-                                                                  CreatePragmaFunctionInfo &info) {
+                                                               CreatePragmaFunctionInfo &info) {
 	throw BinderException("UC databases do not support creating pragma functions");
 }
 
-optional_ptr<CatalogEntry> UCSchemaEntry::CreateCollation(CatalogTransaction transaction,
-                                                             CreateCollationInfo &info) {
+optional_ptr<CatalogEntry> UCSchemaEntry::CreateCollation(CatalogTransaction transaction, CreateCollationInfo &info) {
 	throw BinderException("UC databases do not support creating collations");
 }
 
@@ -127,7 +126,7 @@ bool CatalogTypeIsSupported(CatalogType type) {
 }
 
 void UCSchemaEntry::Scan(ClientContext &context, CatalogType type,
-                            const std::function<void(CatalogEntry &)> &callback) {
+                         const std::function<void(CatalogEntry &)> &callback) {
 	if (!CatalogTypeIsSupported(type)) {
 		return;
 	}
@@ -142,7 +141,7 @@ void UCSchemaEntry::DropEntry(ClientContext &context, DropInfo &info) {
 }
 
 optional_ptr<CatalogEntry> UCSchemaEntry::GetEntry(CatalogTransaction transaction, CatalogType type,
-                                                      const string &name) {
+                                                   const string &name) {
 	if (!CatalogTypeIsSupported(type)) {
 		return nullptr;
 	}

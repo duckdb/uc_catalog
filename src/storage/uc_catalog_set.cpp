@@ -22,7 +22,7 @@ optional_ptr<CatalogEntry> UCCatalogSet::GetEntry(ClientContext &context, const 
 }
 
 void UCCatalogSet::DropEntry(ClientContext &context, DropInfo &info) {
-    throw NotImplementedException("UCCatalogSet::DropEntry");
+	throw NotImplementedException("UCCatalogSet::DropEntry");
 }
 
 void UCCatalogSet::EraseEntryInternal(const string &name) {

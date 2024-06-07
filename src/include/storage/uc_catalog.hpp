@@ -17,8 +17,8 @@ namespace duckdb {
 class UCSchemaEntry;
 
 struct UCCredentials {
-    string endpoint;
-    string token;
+	string endpoint;
+	string token;
 
 	// Not really part of the credentials, but required to query s3 tables
 	string aws_region;
@@ -26,19 +26,20 @@ struct UCCredentials {
 
 class UCClearCacheFunction : public TableFunction {
 public:
-    UCClearCacheFunction();
+	UCClearCacheFunction();
 
-    static void ClearCacheOnSetting(ClientContext &context, SetScope scope, Value &parameter);
+	static void ClearCacheOnSetting(ClientContext &context, SetScope scope, Value &parameter);
 };
 
 class UCCatalog : public Catalog {
 public:
-	explicit UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode, UCCredentials credentials);
+	explicit UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode,
+	                   UCCredentials credentials);
 	~UCCatalog();
 
 	string internal_name;
 	AccessMode access_mode;
-    UCCredentials credentials;
+	UCCredentials credentials;
 
 public:
 	void Initialize(bool load_builtin) override;

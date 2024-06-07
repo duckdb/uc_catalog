@@ -26,15 +26,15 @@ public:
 	void Commit();
 	void Rollback();
 
-//	UCConnection &GetConnection();
-//	unique_ptr<UCResult> Query(const string &query);
+	//	UCConnection &GetConnection();
+	//	unique_ptr<UCResult> Query(const string &query);
 	static UCTransaction &Get(ClientContext &context, Catalog &catalog);
 	AccessMode GetAccessMode() const {
 		return access_mode;
 	}
 
 private:
-//	UCConnection connection;
+	//	UCConnection connection;
 	UCTransactionState transaction_state;
 	AccessMode access_mode;
 };

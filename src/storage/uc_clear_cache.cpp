@@ -45,7 +45,6 @@ void UCClearCacheFunction::ClearCacheOnSetting(ClientContext &context, SetScope 
 	ClearUCCaches(context);
 }
 
-UCClearCacheFunction::UCClearCacheFunction()
-    : TableFunction("uc_clear_cache", {}, ClearCacheFunction, ClearCacheBind) {
+UCClearCacheFunction::UCClearCacheFunction() : TableFunction("uc_clear_cache", {}, ClearCacheFunction, ClearCacheBind) {
 }
 } // namespace duckdb

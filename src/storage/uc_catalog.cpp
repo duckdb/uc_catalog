@@ -8,14 +8,15 @@
 
 namespace duckdb {
 
-UCCatalog::UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode, UCCredentials credentials)
-    : Catalog(db_p), internal_name(internal_name),access_mode(access_mode), credentials(std::move(credentials)), schemas(*this) {
+UCCatalog::UCCatalog(AttachedDatabase &db_p, const string &internal_name, AccessMode access_mode,
+                     UCCredentials credentials)
+    : Catalog(db_p), internal_name(internal_name), access_mode(access_mode), credentials(std::move(credentials)),
+      schemas(*this) {
 }
 
 UCCatalog::~UCCatalog() = default;
 
 void UCCatalog::Initialize(bool load_builtin) {
-
 }
 
 optional_ptr<CatalogEntry> UCCatalog::CreateSchema(CatalogTransaction transaction, CreateSchemaInfo &info) {
@@ -39,8 +40,7 @@ void UCCatalog::ScanSchemas(ClientContext &context, std::function<void(SchemaCat
 }
 
 optional_ptr<SchemaCatalogEntry> UCCatalog::GetSchema(CatalogTransaction transaction, const string &schema_name,
-                                                         OnEntryNotFound if_not_found,
-                                                         QueryErrorContext error_context) {
+                                                      OnEntryNotFound if_not_found, QueryErrorContext error_context) {
 	if (schema_name == DEFAULT_SCHEMA) {
 		if (default_schema.empty()) {
 			throw InvalidInputException("Attempting to fetch the default schema - but no database was "
@@ -77,24 +77,24 @@ void UCCatalog::ClearCache() {
 }
 
 unique_ptr<PhysicalOperator> UCCatalog::PlanInsert(ClientContext &context, LogicalInsert &op,
-                                        unique_ptr<PhysicalOperator> plan) {
-    throw NotImplementedException("UCCatalog PlanInsert");
+                                                   unique_ptr<PhysicalOperator> plan) {
+	throw NotImplementedException("UCCatalog PlanInsert");
 }
 unique_ptr<PhysicalOperator> UCCatalog::PlanCreateTableAs(ClientContext &context, LogicalCreateTable &op,
-                                               unique_ptr<PhysicalOperator> plan) {
-    throw NotImplementedException("UCCatalog PlanCreateTableAs");
+                                                          unique_ptr<PhysicalOperator> plan) {
+	throw NotImplementedException("UCCatalog PlanCreateTableAs");
 }
 unique_ptr<PhysicalOperator> UCCatalog::PlanDelete(ClientContext &context, LogicalDelete &op,
-                                        unique_ptr<PhysicalOperator> plan) {
-    throw NotImplementedException("UCCatalog PlanDelete");
+                                                   unique_ptr<PhysicalOperator> plan) {
+	throw NotImplementedException("UCCatalog PlanDelete");
 }
 unique_ptr<PhysicalOperator> UCCatalog::PlanUpdate(ClientContext &context, LogicalUpdate &op,
-                                        unique_ptr<PhysicalOperator> plan) {
-    throw NotImplementedException("UCCatalog PlanUpdate");
+                                                   unique_ptr<PhysicalOperator> plan) {
+	throw NotImplementedException("UCCatalog PlanUpdate");
 }
 unique_ptr<LogicalOperator> UCCatalog::BindCreateIndex(Binder &binder, CreateStatement &stmt, TableCatalogEntry &table,
-                                            unique_ptr<LogicalOperator> plan) {
-    throw NotImplementedException("UCCatalog BindCreateIndex");
+                                                       unique_ptr<LogicalOperator> plan) {
+	throw NotImplementedException("UCCatalog BindCreateIndex");
 }
 
 } // namespace duckdb

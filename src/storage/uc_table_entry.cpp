@@ -28,55 +28,58 @@ unique_ptr<BaseStatistics> UCTableEntry::GetStatistics(ClientContext &context, c
 	return nullptr;
 }
 
-void UCTableEntry::BindUpdateConstraints(Binder &binder, LogicalGet &, LogicalProjection &, LogicalUpdate &, ClientContext &) {
-    throw NotImplementedException("BindUpdateConstraints");
+void UCTableEntry::BindUpdateConstraints(Binder &binder, LogicalGet &, LogicalProjection &, LogicalUpdate &,
+                                         ClientContext &) {
+	throw NotImplementedException("BindUpdateConstraints");
 }
 
 TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<FunctionData> &bind_data) {
-    auto &db = DatabaseInstance::GetDatabase(context);
-    auto &delta_function_set = ExtensionUtil::GetTableFunction(db, "delta_scan");
-    auto delta_scan_function = delta_function_set.functions.GetFunctionByArguments(context, {LogicalType::VARCHAR});
+	auto &db = DatabaseInstance::GetDatabase(context);
+	auto &delta_function_set = ExtensionUtil::GetTableFunction(db, "delta_scan");
+	auto delta_scan_function = delta_function_set.functions.GetFunctionByArguments(context, {LogicalType::VARCHAR});
 	auto &uc_catalog = catalog.Cast<UCCatalog>();
 
-    D_ASSERT(table_data);
+	D_ASSERT(table_data);
 
 	if (table_data->data_source_format != "DELTA") {
-		throw NotImplementedException("Table '%s' is of unsupported format '%s', ", table_data->name, table_data->data_source_format);
+		throw NotImplementedException("Table '%s' is of unsupported format '%s', ", table_data->name,
+		                              table_data->data_source_format);
 	}
 
 	// Set the S3 path as input to table function
-    vector<Value> inputs = {table_data->storage_location};
+	vector<Value> inputs = {table_data->storage_location};
 
-    if (table_data->storage_location.find("file://") != 0) {
-        auto &secret_manager = SecretManager::Get(context);
-	// Get Credentials from UCAPI
-	auto table_credentials = UCAPI::GetTableCredentials(table_data->table_id, uc_catalog.credentials);
+	if (table_data->storage_location.find("file://") != 0) {
+		auto &secret_manager = SecretManager::Get(context);
+		// Get Credentials from UCAPI
+		auto table_credentials = UCAPI::GetTableCredentials(table_data->table_id, uc_catalog.credentials);
 
-	// Inject secret into secret manager scoped to this path
-	CreateSecretInfo info(OnCreateConflict::REPLACE_ON_CONFLICT, SecretPersistType::TEMPORARY);
-	info.name = "__internal_uc_" + table_data->table_id;
-	info.type = "s3";
-	info.provider = "config";
-	info.options = {
-		{"key_id", table_credentials.key_id},
-		{"secret", table_credentials.secret},
-		{"session_token", table_credentials.session_token},
-		{"region", uc_catalog.credentials.aws_region},
-	};
-	info.scope = {table_data->storage_location};
-	secret_manager.CreateSecret(context, info);
-    }
-    named_parameter_map_t param_map;
-    vector<LogicalType> return_types;
-    vector<string> names;
-    TableFunctionRef empty_ref;
+		// Inject secret into secret manager scoped to this path
+		CreateSecretInfo info(OnCreateConflict::REPLACE_ON_CONFLICT, SecretPersistType::TEMPORARY);
+		info.name = "__internal_uc_" + table_data->table_id;
+		info.type = "s3";
+		info.provider = "config";
+		info.options = {
+		    {"key_id", table_credentials.key_id},
+		    {"secret", table_credentials.secret},
+		    {"session_token", table_credentials.session_token},
+		    {"region", uc_catalog.credentials.aws_region},
+		};
+		info.scope = {table_data->storage_location};
+		secret_manager.CreateSecret(context, info);
+	}
+	named_parameter_map_t param_map;
+	vector<LogicalType> return_types;
+	vector<string> names;
+	TableFunctionRef empty_ref;
 
-    TableFunctionBindInput bind_input(inputs, param_map, return_types, names, nullptr, nullptr, delta_scan_function, empty_ref);
+	TableFunctionBindInput bind_input(inputs, param_map, return_types, names, nullptr, nullptr, delta_scan_function,
+	                                  empty_ref);
 
-    auto result = delta_scan_function.bind(context, bind_input, return_types, names);
-    bind_data = std::move(result);
+	auto result = delta_scan_function.bind(context, bind_input, return_types, names);
+	bind_data = std::move(result);
 
-    return delta_scan_function;
+	return delta_scan_function;
 }
 
 TableStorageInfo UCTableEntry::GetStorageInfo(ClientContext &context) {
