@@ -37,7 +37,8 @@ public:
 	UCTableEntry(Catalog &catalog, SchemaCatalogEntry &schema, CreateTableInfo &info);
 	UCTableEntry(Catalog &catalog, SchemaCatalogEntry &schema, UCTableInfo &info);
 
-    unique_ptr<UCAPITable> table_data;
+	unique_ptr<UCAPITable> table_data;
+
 public:
 	unique_ptr<BaseStatistics> GetStatistics(ClientContext &context, column_t column_id) override;
 

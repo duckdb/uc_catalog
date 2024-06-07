@@ -18,9 +18,10 @@ class UCTransaction;
 class UCSchemaEntry : public SchemaCatalogEntry {
 public:
 	UCSchemaEntry(Catalog &catalog, CreateSchemaInfo &info);
-    ~UCSchemaEntry() override;
+	~UCSchemaEntry() override;
 
-    unique_ptr<UCAPISchema> schema_data;
+	unique_ptr<UCAPISchema> schema_data;
+
 public:
 	optional_ptr<CatalogEntry> CreateTable(CatalogTransaction transaction, BoundCreateTableInfo &info) override;
 	optional_ptr<CatalogEntry> CreateFunction(CatalogTransaction transaction, CreateFunctionInfo &info) override;
