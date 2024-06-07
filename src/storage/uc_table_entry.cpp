@@ -37,7 +37,6 @@ TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<F
     auto &delta_function_set = ExtensionUtil::GetTableFunction(db, "delta_scan");
     auto delta_scan_function = delta_function_set.functions.GetFunctionByArguments(context, {LogicalType::VARCHAR});
 	auto &uc_catalog = catalog.Cast<UCCatalog>();
-	auto &secret_manager = SecretManager::Get(context);
 
     D_ASSERT(table_data);
 
@@ -48,6 +47,8 @@ TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<F
 	// Set the S3 path as input to table function
     vector<Value> inputs = {table_data->storage_location};
 
+    if (table_data->storage_location.find("file://") != 0) {
+        auto &secret_manager = SecretManager::Get(context);
 	// Get Credentials from UCAPI
 	auto table_credentials = UCAPI::GetTableCredentials(table_data->table_id, uc_catalog.credentials);
 
@@ -64,7 +65,7 @@ TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<F
 	};
 	info.scope = {table_data->storage_location};
 	secret_manager.CreateSecret(context, info);
-
+    }
     named_parameter_map_t param_map;
     vector<LogicalType> return_types;
     vector<string> names;
