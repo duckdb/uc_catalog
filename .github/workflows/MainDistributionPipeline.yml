@@ -6,6 +6,21 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+    inputs:
+      duckdb_explicit_ref:
+        type: string
+      duckdb_explicit_tag:
+        type: string
+      extension_explicit_tag:
+        type: string
+  workflow_call:
+    inputs:
+      duckdb_explicit_ref:
+        type: string
+      duckdb_explicit_tag:
+        type: string
+      extension_explicit_tag:
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref || '' }}-${{ github.base_ref || '' }}-${{ github.ref != 'refs/heads/main' || github.sha }}
@@ -16,8 +31,10 @@ jobs:
     name: Build extension binaries
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@v1.1.1
     with:
-      duckdb_version: v1.1.1
-      ci_tools_version: v1.1.1
+      duckdb_version: ${{ inputs.duckdb_explicit_ref || 'v1.1.1' }}
+      duckdb_tag: ${{ inputs.duckdb_explicit_tag || '' }}
+      extension_tag: ${{ inputs.extension_explicit_tag || '' }}
+      ci_tools_version: main
       extension_name: uc_catalog
       exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads;windows_amd64_rtools;windows_amd64;linux_arm64;'
 
@@ -27,7 +44,7 @@ jobs:
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_deploy.yml@v1.1.1
     secrets: inherit
     with:
-      duckdb_version: v1.1.1
+      duckdb_version: ${{ inputs.duckdb_explicit_ref || 'v1.1.1' }}
       extension_name: uc_catalog
       exclude_archs: 'wasm_mvp;wasm_eh;wasm_threads;windows_amd64_rtools;windows_amd64;linux_arm64;'
       deploy_latest: ${{ startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' }}
