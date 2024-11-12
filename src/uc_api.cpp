@@ -6,6 +6,9 @@
 
 namespace duckdb {
 
+//! We use a global here to store the path that is selected on the UCAPI::InitializeCurl call
+static string SELECTED_CURL_CERT_PATH = "";
+
 static size_t GetRequestWriteCallback(void *contents, size_t size, size_t nmemb, void *userp) {
 	((std::string *)userp)->append((char *)contents, size * nmemb);
 	return size * nmemb;
@@ -27,18 +30,23 @@ static string certFileLocations[] = {
         "/etc/ssl/cert.pem"
 };
 
-// Look through the the above locations and if one of the files exists, set that as the location
-// curl should use. Returns true if a file was set, false if no matching file was found
+// Look through the the above locations and if one of the files exists, set that as the location curl should use.
+static bool SelectCurlCertPath() {
+	for (string& caFile : certFileLocations) {
+		struct stat buf;
+		if (stat(caFile.c_str(), &buf) == 0) {
+			SELECTED_CURL_CERT_PATH = caFile;
+		}
+	}
+	return false;
+}
+
 static bool SetCurlCAFileInfo(CURL* curl) {
-        for (string& caFile : certFileLocations) {
-                struct stat buf;
-                if (stat(caFile.c_str(), &buf) == 0) {
-                        // file exists
-                        curl_easy_setopt(curl, CURLOPT_CAINFO, caFile.c_str());
-                        return true;
-                }
-        }
-        return false;
+	if (!SELECTED_CURL_CERT_PATH.empty()) {
+		curl_easy_setopt(curl, CURLOPT_CAINFO, SELECTED_CURL_CERT_PATH.c_str());
+        return true;
+	}
+    return false;
 }
 
 static string GetRequest(const string &url, const string &token = "") {
@@ -55,7 +63,7 @@ static string GetRequest(const string &url, const string &token = "") {
 			curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, token.c_str());
 			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
 		}
-                SetCurlCAFileInfo(curl); // todo: log something if this returns false
+        SetCurlCAFileInfo(curl); // todo: log something if this returns false
 		res = curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
 
@@ -133,6 +141,10 @@ static string GetCredentialsRequest(const string &url, const string &table_id, c
 		return readBuffer;
 	}
 	throw InternalException("Failed to initialize curl");
+}
+
+void UCAPI::InitializeCurl() {
+	SelectCurlCertPath();
 }
 
 //# list catalogs

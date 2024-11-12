@@ -50,6 +50,9 @@ struct UCAPITableCredentials {
 
 class UCAPI {
 public:
+  	//! WARNING: not thread-safe. To be called once on extension initialization
+  	static void InitializeCurl();
+
 	static UCAPITableCredentials GetTableCredentials(const string &table_id, UCCredentials credentials);
 	static vector<string> GetCatalogs(const string &catalog, UCCredentials credentials);
 	static vector<UCAPITable> GetTables(const string &catalog, const string &schema, UCCredentials credentials);
