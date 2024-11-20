@@ -10,9 +10,10 @@
 #include "duckdb/common/string_util.hpp"
 #include "duckdb/function/scalar_function.hpp"
 #include "duckdb/main/extension_util.hpp"
-#include <duckdb/parser/parsed_data/create_scalar_function_info.hpp>
+#include "duckdb/parser/parsed_data/create_scalar_function_info.hpp"
 #include "duckdb/parser/parsed_data/attach_info.hpp"
 #include "duckdb/storage/storage_extension.hpp"
+#include "uc_api.hpp"
 
 namespace duckdb {
 
@@ -129,6 +130,8 @@ public:
 };
 
 static void LoadInternal(DatabaseInstance &instance) {
+	UCAPI::InitializeCurl();
+
 	SecretType secret_type;
 	secret_type.name = "uc";
 	secret_type.deserializer = KeyValueSecret::Deserialize<KeyValueSecret>;
