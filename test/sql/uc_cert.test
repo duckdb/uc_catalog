@@ -1,0 +1,26 @@
+# name: test/sql/uc_cert.test
+# description: test uc_catalog ssl cert with a correctly placed cert
+# group: [uc_catalog]
+
+# Require statement will ensure this test is run with this extension loaded
+require parquet
+
+require uc_catalog
+
+require httpfs
+
+statement ok
+CREATE SECRET (
+    TYPE UC,
+    TOKEN 'not-used',
+    ENDPOINT 'https://duckdb.org',
+    AWS_REGION 'us-east-2'
+);
+
+# Catalog Secret
+statement ok
+ATTACH 'unity' AS unity (TYPE UC_CATALOG);
+
+# This would throw SSL cert error if ssl cert is not properly found
+statement ok
+SELECT database_name, schema_name, table_name FROM duckdb_tables() where database_name='unity' order by table_name;

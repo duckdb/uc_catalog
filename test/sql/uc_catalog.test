@@ -11,55 +11,102 @@ require delta
 
 require httpfs
 
-# Set these to run the test
-require-env UC_TOKEN
+require-env UC_TEST_SERVER_RUNNING
 
-require-env UC_ENDPOINT
-
-require-env UC_AWS_REGION
+statement ok
+CREATE SECRET (
+    TYPE UC,
+    TOKEN 'not-used',
+    ENDPOINT 'http://127.0.0.1:8080',
+    AWS_REGION 'us-east-2'
+);
 
 # Catalog Secret
 statement ok
-CREATE SECRET (
-	TYPE UC,
-	TOKEN '${UC_TOKEN}',
-	ENDPOINT '${UC_ENDPOINT}',
-	AWS_REGION '${UC_AWS_REGION}'
-)
+ATTACH 'unity' AS unity (TYPE UC_CATALOG);
 
-# attach the workspace catalog under uc1 alias
-statement ok
-ATTACH 'test_catalog' AS test_catalog (TYPE UC_CATALOG)
-
-# Note that the "information_schema" schema is assumed to be internal atm so not shown here
-query IIIIII
-SHOW ALL TABLES;
+query III
+SELECT database_name, schema_name, table_name FROM duckdb_tables() where database_name='unity' order by table_name;
 ----
-test_catalog	test_schema	test_table	[a, b]	[INTEGER, VARCHAR]	false
-test_catalog	test_schema	test_table2	[a, b]	[VARCHAR, INTEGER]	false
-test_catalog	test_schema	test_table_ramesh	[x]	[INTEGER]	false
-test_catalog	test_schema	test_table_tdas	[a, b]	[INTEGER, VARCHAR]	false
+unity	default	marksheet
+unity	default	marksheet_uniform
+unity	default	numbers
+unity	default	user_countries
+
+#mode output_result
+
+query III
+FROM unity.default.marksheet;
+----
+1	nWYHawtqUw	930
+2	uvOzzthsLV	166
+3	WIAehuXWkv	170
+4	wYCSvnJKTo	709
+5	VsslXsUIDZ	993
+6	ZLsACYYTFy	813
+7	BtDDvLeBpK	52
+8	YISVtrPfGr	8
+9	PBPJHDFjjC	45
+10	qbDuUJzJMO	756
+11	EjqqWoaLJn	712
+12	jpZLMdKXpn	847
+13	acpjQXpJCp	649
+14	nOKqHhRwao	133
+15	kxUUZEUoKv	398
+
+# FIXME: requires fix for file:// urls
+#statement ok
+#FROM unity.default.marksheet_uniform;
 
 query II
-select * from test_catalog.test_schema.test_table;
+FROM unity.default.numbers;
 ----
-1	x
+564	188.75535598441473
+755	883.6105633023361
+644	203.4395591086936
+75	277.8802190765611
+42	403.857969425109
+680	797.6912200731077
+821	767.7998537403159
+484	344.00373976089304
+477	380.6785614543262
+131	35.44373222835895
+294	209.32243623208947
+150	329.19730274053694
+539	425.66102859000944
+247	477.742227230588
+958	509.3712727285101
 
-query II
-select * from test_catalog.test_schema.test_table2;
+query III
+FROM unity.default.user_countries;
 ----
-x	1
-
-# Note that there exist now 2 secrets: the UC secret and the temporary s3 credentials fetched from UC
-query II rowsort
-select name[:14], type from duckdb_secrets()
-----
-__default_uc	uc
-__internal_uc_	s3
-__internal_uc_	s3
-
-# If we query a table again, the secret will be updated
-query II
-select * from test_catalog.test_schema.test_table;
-----
-1	x
+Logan Johnson	25	Austria
+Mr. Jay Russell	33	Austria
+Amber White	64	Austria
+Jessica Sherman	74	Austria
+Christopher Anderson	61	Austria
+Jeffrey Booker	64	Austria
+Emily Best	74	Austria
+Stephanie Downs MD	48	Austria
+Katie Montgomery	47	Belgia
+Derrick Gonzalez	55	Belgia
+Robert Johnson	26	Belgia
+Katherine Reyes	26	Belgia
+Andrew Cantrell	59	Belgia
+Adrienne Morgan	45	Belgia
+Crystal Jones	73	Belgia
+Jesse Austin	21	Belgia
+Cynthia Lawson	30	Belgia
+Crystal Bruce	24	Serbia
+Anthony Gonzales	71	Serbia
+Christina Hall	69	Serbia
+Colleen Spencer	34	Serbia
+Brian Smith	24	Serbia
+Scott Mcpherson III	74	Serbia
+Michael Wolfe	30	Serbia
+Virginia Burton	38	Serbia
+Rodney Pope	74	Serbia
+Gary Wright	74	Serbia
+Matthew Jefferson	42	Serbia
+Beth Cherry	71	Serbia
+Dawn Mendoza	46	Serbia

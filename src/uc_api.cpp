@@ -49,6 +49,15 @@ static bool SetCurlCAFileInfo(CURL* curl) {
     return false;
 }
 
+// Note: every curl object we use should set this, because without it some linux distro's may not find the CA certificate.
+static void InitializeCurlObject(CURL * curl, const string &token) {
+  	if (!token.empty()) {
+		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, token.c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
+	}
+    SetCurlCAFileInfo(curl);
+}
+
 static string GetRequest(const string &url, const string &token = "") {
 	CURL *curl;
 	CURLcode res;
@@ -59,11 +68,7 @@ static string GetRequest(const string &url, const string &token = "") {
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, GetRequestWriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-		if (!token.empty()) {
-			curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, token.c_str());
-			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
-		}
-        SetCurlCAFileInfo(curl); // todo: log something if this returns false
+		InitializeCurlObject(curl, token);
 		res = curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
 
@@ -121,15 +126,11 @@ static string GetCredentialsRequest(const string &url, const string &table_id, c
 		struct curl_slist *headers = curl_slist_append(nullptr, "Content-Type: application/json");
 		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-		// Set token
-		if (!token.empty()) {
-			curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, token.c_str());
-			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);
-		}
-
 		// Set request body
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, body.length());
+
+        InitializeCurlObject(curl, token);
 
 		res = curl_easy_perform(curl);
 		curl_easy_cleanup(curl);
