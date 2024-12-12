@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VCPKG_TARGET_TRIPLET: 'x64-linux'
-      GEN: Ninja
+      GEN: ninja
       VCPKG_TOOLCHAIN_PATH: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
       UC_TEST_SERVER_RUNNING: 1
 
@@ -61,7 +61,7 @@ jobs:
 
     - name: Test extension
       run: |
-        make test
+        make test_release
 
     - name: Move ssl certificate to ensure we still find it
       run: |
@@ -69,4 +69,4 @@ jobs:
 
     - name: Test extension
       run: |
-        make test
+        make test_release

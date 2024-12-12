@@ -7,8 +7,6 @@ require parquet
 
 require uc_catalog
 
-require delta
-
 require httpfs
 
 statement ok
