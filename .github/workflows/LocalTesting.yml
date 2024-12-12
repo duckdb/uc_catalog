@@ -62,3 +62,11 @@ jobs:
     - name: Test extension
       run: |
         make test
+
+    - name: Move ssl certificate to ensure we still find it
+      run: |
+        sudo mv /etc/ssl/certs/ca-certificates.crt /etc/ssl/cert.pem
+
+    - name: Test extension
+      run: |
+        make test
