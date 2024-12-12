@@ -48,10 +48,10 @@ jobs:
 
     - uses: actions/setup-node@v4
 
-    - name: install Azure test service
+    - name: Setup Unity Catalog test server
       run: |
         sudo apt install default-jre
-        git clone git@github.com:unitycatalog/unitycatalog.git
+        git clone https://github.com/unitycatalog/unitycatalog.git
         ./bin/start-uc-server &
         sleep 10
 
