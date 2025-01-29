@@ -39,9 +39,7 @@ LogicalType UCUtils::TypeToLogicalType(ClientContext &context, const string &typ
 		return LogicalType::INTEGER;
 	} else if (type_text == "long") {
 		return LogicalType::BIGINT;
-	} else if (type_text == "char" || type_text.find("char(") == 0) {
-		return LogicalType::CHAR;
-	} else if (type_text == "string" || type_text.find("varchar(") == 0) {
+	} else if (type_text == "string" || type_text.find("varchar(") == 0|| type_text == "char"  || type_text.find("char(") == 0) {
 		return LogicalType::VARCHAR;
 	} else if (type_text == "double") {
 		return LogicalType::DOUBLE;
