@@ -39,7 +39,10 @@ LogicalType UCUtils::TypeToLogicalType(ClientContext &context, const string &typ
 		return LogicalType::INTEGER;
 	} else if (type_text == "long") {
 		return LogicalType::BIGINT;
-	} else if (type_text == "string") {
+	} else if (type_text == "string" ||
+	           type_text.find("varchar(") == 0 ||
+	           type_text == "char" ||
+	           type_text.find("char(") == 0) {
 		return LogicalType::VARCHAR;
 	} else if (type_text == "double") {
 		return LogicalType::DOUBLE;
@@ -48,13 +51,13 @@ LogicalType UCUtils::TypeToLogicalType(ClientContext &context, const string &typ
 	} else if (type_text == "boolean") {
 		return LogicalType::BOOLEAN;
 	} else if (type_text == "timestamp") {
-		return LogicalType::TIMESTAMP;
+		return LogicalType::TIMESTAMP_TZ;
 	} else if (type_text == "binary") {
 		return LogicalType::BLOB;
 	} else if (type_text == "date") {
 		return LogicalType::DATE;
-	} else if (type_text == "timestamp") {
-		return LogicalType::TIMESTAMP; // TODO: Is this the right timestamp
+	} else if (type_text == "void") {
+		return LogicalType::SQLNULL; // TODO: This seems to be the closest match
 	} else if (type_text.find("decimal(") == 0) {
 		size_t spec_end = type_text.find(')');
 		if (spec_end != string::npos) {
