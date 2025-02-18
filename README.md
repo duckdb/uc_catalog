@@ -5,7 +5,7 @@ This extension could be renamed, moved or removed at any point.
 This is a proof-of-concept extension demonstrating DuckDB connecting to the Unity Catalog to scan Delta Table using 
 the [delta extension](https://duckdb.org/docs/extensions/delta).
 
-You can try it out using DuckDB (>= v1.0.0) on the platforms: `linux_amd64`, `linux_amd64_gcc4`, `osx_arm64` and `osx_arm64` by running:
+You can try it out using DuckDB (>= v1.0.0) on the platforms: `linux_amd64`, `linux_amd64_gcc4`, `osx_amd64` and `osx_arm64` by running:
 
 ```SQL
 INSTALL uc_catalog from core_nightly;
