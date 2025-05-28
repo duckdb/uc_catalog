@@ -140,12 +140,12 @@ void UCSchemaEntry::DropEntry(ClientContext &context, DropInfo &info) {
 	GetCatalogSet(info.type).DropEntry(context, info);
 }
 
-optional_ptr<CatalogEntry> UCSchemaEntry::GetEntry(CatalogTransaction transaction, CatalogType type,
-                                                   const string &name) {
-	if (!CatalogTypeIsSupported(type)) {
+optional_ptr<CatalogEntry>
+UCSchemaEntry::LookupEntry(CatalogTransaction transaction, const EntryLookupInfo &lookup_info) {
+	if (!CatalogTypeIsSupported(lookup_info.GetCatalogType())) {
 		return nullptr;
 	}
-	return GetCatalogSet(type).GetEntry(transaction.GetContext(), name);
+	return GetCatalogSet(lookup_info.GetCatalogType()).GetEntry(transaction.GetContext(), lookup_info.GetEntryName());
 }
 
 UCCatalogSet &UCSchemaEntry::GetCatalogSet(CatalogType type) {

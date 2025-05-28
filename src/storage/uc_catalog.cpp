@@ -39,18 +39,19 @@ void UCCatalog::ScanSchemas(ClientContext &context, std::function<void(SchemaCat
 	schemas.Scan(context, [&](CatalogEntry &schema) { callback(schema.Cast<UCSchemaEntry>()); });
 }
 
-optional_ptr<SchemaCatalogEntry> UCCatalog::GetSchema(CatalogTransaction transaction, const string &schema_name,
-                                                      OnEntryNotFound if_not_found, QueryErrorContext error_context) {
-	if (schema_name == DEFAULT_SCHEMA) {
+optional_ptr<SchemaCatalogEntry> UCCatalog::LookupSchema(CatalogTransaction transaction,
+									 const EntryLookupInfo &schema_lookup,
+									 OnEntryNotFound if_not_found) {
+	if (schema_lookup.GetEntryName() == DEFAULT_SCHEMA) {
 		if (default_schema.empty()) {
 			throw InvalidInputException("Attempting to fetch the default schema - but no database was "
-			                            "provided in the connection string");
+						    "provided in the connection string");
 		}
-		return GetSchema(transaction, default_schema, if_not_found, error_context);
+		return GetSchema(transaction, default_schema, if_not_found);
 	}
-	auto entry = schemas.GetEntry(transaction.GetContext(), schema_name);
+	auto entry = schemas.GetEntry(transaction.GetContext(), schema_lookup.GetEntryName());
 	if (!entry && if_not_found != OnEntryNotFound::RETURN_NULL) {
-		throw BinderException("Schema with name \"%s\" not found", schema_name);
+		throw BinderException("Schema with name \"%s\" not found", schema_lookup.GetEntryName());
 	}
 	return reinterpret_cast<SchemaCatalogEntry *>(entry.get());
 }
@@ -76,22 +77,30 @@ void UCCatalog::ClearCache() {
 	schemas.ClearEntries();
 }
 
-unique_ptr<PhysicalOperator> UCCatalog::PlanInsert(ClientContext &context, LogicalInsert &op,
-                                                   unique_ptr<PhysicalOperator> plan) {
+PhysicalOperator &UCCatalog::PlanCreateTableAs(ClientContext &context, PhysicalPlanGenerator &planner,
+			    LogicalCreateTable &op, PhysicalOperator &plan) {
 	throw NotImplementedException("UCCatalog PlanInsert");
 }
-unique_ptr<PhysicalOperator> UCCatalog::PlanCreateTableAs(ClientContext &context, LogicalCreateTable &op,
-                                                          unique_ptr<PhysicalOperator> plan) {
-	throw NotImplementedException("UCCatalog PlanCreateTableAs");
+
+PhysicalOperator &UCCatalog::PlanInsert(ClientContext &context, PhysicalPlanGenerator &planner, LogicalInsert &op,
+	     optional_ptr<PhysicalOperator> plan) {
+		throw NotImplementedException("UCCatalog PlanCreateTableAs");
 }
-unique_ptr<PhysicalOperator> UCCatalog::PlanDelete(ClientContext &context, LogicalDelete &op,
-                                                   unique_ptr<PhysicalOperator> plan) {
+
+PhysicalOperator &UCCatalog::PlanDelete(ClientContext &context, PhysicalPlanGenerator &planner, LogicalDelete &op,
+	     PhysicalOperator &plan) {
 	throw NotImplementedException("UCCatalog PlanDelete");
 }
-unique_ptr<PhysicalOperator> UCCatalog::PlanUpdate(ClientContext &context, LogicalUpdate &op,
-                                                   unique_ptr<PhysicalOperator> plan) {
+
+PhysicalOperator &UCCatalog::PlanDelete(ClientContext &context, PhysicalPlanGenerator &planner, LogicalDelete &op) {
+	throw NotImplementedException("UCCatalog PlanDelete");
+}
+
+PhysicalOperator &UCCatalog::PlanUpdate(ClientContext &context, PhysicalPlanGenerator &planner, LogicalUpdate &op,
+				     PhysicalOperator &plan) {
 	throw NotImplementedException("UCCatalog PlanUpdate");
 }
+
 unique_ptr<LogicalOperator> UCCatalog::BindCreateIndex(Binder &binder, CreateStatement &stmt, TableCatalogEntry &table,
                                                        unique_ptr<LogicalOperator> plan) {
 	throw NotImplementedException("UCCatalog BindCreateIndex");
