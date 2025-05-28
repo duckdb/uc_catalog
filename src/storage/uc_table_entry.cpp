@@ -55,18 +55,21 @@ TableFunction UCTableEntry::GetScanFunction(ClientContext &context, unique_ptr<F
 		auto table_credentials = UCAPI::GetTableCredentials(table_data->table_id, uc_catalog.credentials);
 
 		// Inject secret into secret manager scoped to this path
-		CreateSecretInfo info(OnCreateConflict::REPLACE_ON_CONFLICT, SecretPersistType::TEMPORARY);
-		info.name = "__internal_uc_" + table_data->table_id;
-		info.type = "s3";
-		info.provider = "config";
-		info.options = {
+		CreateSecretInput input;
+		input.on_conflict = OnCreateConflict::REPLACE_ON_CONFLICT;
+		input.persist_type = SecretPersistType::TEMPORARY;
+		input.name = "__internal_uc_" + table_data->table_id;
+		input.type = "s3";
+		input.provider = "config";
+		input.options = {
 		    {"key_id", table_credentials.key_id},
 		    {"secret", table_credentials.secret},
 		    {"session_token", table_credentials.session_token},
 		    {"region", uc_catalog.credentials.aws_region},
 		};
-		info.scope = {table_data->storage_location};
-		secret_manager.CreateSecret(context, info);
+		input.scope = {table_data->storage_location};
+
+		secret_manager.CreateSecret(context, input);
 	}
 	named_parameter_map_t param_map;
 	vector<LogicalType> return_types;
